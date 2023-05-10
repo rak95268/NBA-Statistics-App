@@ -15,10 +15,12 @@ Markdown is transformed into nice looking HTML.
 > **Also, include the GitHub `https` URL to your repository.**
 
     This app allows a user to input a value between 1-30, one ID for each NBA team, to receive data
-    about any team including its full name, conference, division, and abbreviation. It then loads
-    the first image result that appears when the team name is searched on Google. I used the BallDontLie
-    API to retrieve the data. Then I used that data, specifically the team name, as a query for the SerpStack
-    API to retrieve the first image search.
+    about any team including its full name, conference, division, and abbreviation. It then loads additional
+    information gathered from an internet search about the team. The way I accomplisehed this was using the
+    BallDontLie API to retrieve the initial information from the inputted team ID, and then using the team name
+    and city as the query for the SerpStack API, which I used to retrieve information such as the date
+    a team was founded. The SerpStack API is used to return google results of certain queries, which is
+    exactly what I did.
 
     https://github.com/rak95268/cs1302-api/
 
@@ -27,9 +29,7 @@ Markdown is transformed into nice looking HTML.
 > What is something new and/or exciting that you learned from working
 > on this project?
 
-    Something new that I learned from working on this project is how important Type objects are. I had a lot of
-    difficulty in parsing through the SerpStack JSON because it kept returning the image url values as null, but
-    using Type objects helped me work through this issue.
+    Something new that I learned from working on this project is how important planning out an idea is.
 
 
 ## Part 3: Retrospect
@@ -37,6 +37,7 @@ Markdown is transformed into nice looking HTML.
 > If you could start the project over from scratch, what do
 > you think might do differently and why?
 
-    If I could start the project over from scratch, I'd come up with a much simpler idea. This project took
+    If I could start the project over from scratch, I'd first draw out a plan of action. While working
+    on this project, I went through 3 different ideas before finally getting to this one.  This project took
     genuinely forever, and unfortunately during my working progress I was dealing with loss in my family which
-    made working on it that much more challenging.
+    made working on it even more challenging.

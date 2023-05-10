@@ -16,6 +16,9 @@ import java.net.http.HttpResponse.BodyHandlers;
 import java.util.Random;
 import java.lang.Integer;
 import java.io.FileInputStream;
+import javafx.scene.web.WebView;
+import javafx.scene.web.WebEngine;
+import javafx.scene.control.TextArea;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -75,28 +78,38 @@ public class ApiApp extends Application {
         String abbreviation;
         String conference;
         String division;
-        String full_name;
+        String name;
+        String city;
     }
 
     /**
      * Initializes the array which is parsed through to get to the image urls.
-     */
+
     private static class SerpResponse {
-        static SerpResult[] image_results;
+        static SerpResult[] image_urls;
+    }
+    */
+
+    /**
+     * Initializes the Knowledge object that is used to parse through the JSON..
+     */
+    private static class SerpResult {
+        Knowledge knowledge_graph;
     }
 
     /**
-     * Initializes the String that represents the image url.
+     * Initializes the class Knowledge from which the data is drawn.
      */
-    private static class SerpResult {
-        String imageUrl;
+    private static class Knowledge {
+        String website;
+        String title;
+        String description;
+        String founded;
+
     }
 
-    static Type serpType = new TypeToken<SerpResponse>(){}.getType();
-
-
     Stage stage;
-    HBox root;
+    VBox root;
     VBox header;
 
     String searchText = new String("enter any value between 1 and 30");
@@ -107,20 +120,26 @@ public class ApiApp extends Application {
     Button button = new Button("Search team!");
     TextField searchField = new TextField();
     Text bodyText = new Text("");
+    static Text bodyText2 = new Text("");
     String f = "Team name: ";
+    String ci = "City: ";
     String d = "Division: ";
     String c = "Conference: ";
     String a = "Abbreviation: ";
-    Image defaultImage;
-    static ImageView imageView = new ImageView();
+    static String add = "Additional Info: ";
+    String web = "Website: ";
+    String found = "Founded: ";
+    String desc = "Description: ";
+    String fn = "Title: ";
 
+    //    static WebView webView = new WebView();
     /**
      * Constructs an {@code ApiApp} object. This default (i.e., no argument)
      * constructor is executed in Step 2 of the JavaFX Application Life-Cycle.
      */
     public ApiApp() {
         stage = null;
-        root = new HBox();
+        root = new VBox();
         header = new VBox();
 
 
@@ -134,16 +153,17 @@ public class ApiApp extends Application {
         ToolBar toolBar = new ToolBar();
         Text search = new Text("Search: ");
 
-        bodyText.setText(f + "\n" + c + "\n" + d + "\n" + a);
+        bodyText.setText(f + "\n" + ci + "\n" + c + "\n" + d + "\n" + a + "\n\n");
         bodyText.setFont(Font.font("Verdana", FontWeight.BOLD, 15));
-
-
+        bodyText2.setText(add + "\n" + web + "\n" + found + "\n" + fn);
+        bodyText2.setFont(Font.font("Verdana", FontWeight.BOLD, 15));
+        //webView.getEngine().load("https://nba.com/hawks");
         searchField.setText(searchText);
         searchField.setPrefWidth(300);
         toolBar.getItems().addAll(search, searchField, button);
         header.getChildren().addAll(toolBar, instruction);
         borderPane.setTop(header);
-        root.getChildren().addAll(imageView, bodyText);
+        root.getChildren().addAll(bodyText, bodyText2);
         borderPane.setCenter(root);
         EventHandler<ActionEvent> buttonHandler = (ActionEvent gtb) -> {
             this.handle(gtb);
@@ -168,7 +188,7 @@ public class ApiApp extends Application {
 
     public void handle (ActionEvent event) {
         button.setDisable(true);
-        instruction.setText("Getting team...");
+        instruction.setText("Data received!");
         int urlParameter = 0;
         searchText = searchField.getText();
         urlParameter = Integer.parseInt(searchText);
@@ -179,8 +199,8 @@ public class ApiApp extends Application {
 
     /**
      * Sends a request to the BallDontLie API to gather data on NBA teams,
-     * then sends the data gathered to the SerpStack API to generate Google Image searches
-     * of the teams.
+     * then sends the data gathered to the SerpStack API to generate additional info about
+     * the teams.
      *
      * @param id is the team ID used as the query for the first API
      * @return getTeams is true if the method has run appropriately
@@ -205,19 +225,18 @@ public class ApiApp extends Application {
                 .uri(new URI(url))
                 .GET()
                 .build();
-
             HttpResponse<String> response = HTTP_CLIENT.send(request, BodyHandlers.ofString());
             BdlResult ballDontLie = GSON.fromJson(response.body(), (java.lang.reflect.Type)
                 BdlResult.class);
             String abb = ballDontLie.abbreviation;
             String conf = ballDontLie.conference;
             String div = ballDontLie.division;
-            String fna = ballDontLie.full_name;
-            bodyText.setText(f + fna + "\n" + c + conf + "\n" + d + div + "\n" + a + abb);
-//            ApiApp.printBDLResponse(ballDontLie);
+            String fna = ballDontLie.name;
+            String city = ballDontLie.city;
+            bodyText.setText(f + fna + "\n" + ci + city + "\n" + c + conf + "\n"
+                + d + div + "\n" + a + abb + "\n\n");
             getTeams = true;
-
-            String name = ballDontLie.full_name.replaceAll("\\s", "+");
+            String name = ballDontLie.city + "+" + ballDontLie.name;
             System.out.println(name);
             if (getTeams == true) {
                 url = "http://api.serpstack.com/search?access_key=7f0f18cea16d95bef0bd09eb75e31251&query=" + name;
@@ -228,15 +247,14 @@ public class ApiApp extends Application {
                 .GET()
                 .build();
             HttpResponse<String> response2 = HTTP_CLIENT.send(request2, BodyHandlers.ofString());
-//            SerpResponse serp = GSON.fromJson(response2.body(), serpType);
-//            updateSerpResponse(serp);
-
+            SerpResult serp = GSON.fromJson(response2.body(), SerpResult.class);
+            System.out.println(serp.knowledge_graph.website);
+            updateSerpResponse(serp);
 
         } catch (IllegalArgumentException | IOException | URISyntaxException
             | InterruptedException e) {
             instruction.setText("Last attempt to get team failed...");
             Alert a = new Alert(AlertType.NONE);
-
             a.setContentText(errorString);
             a.setTitle("Error");
             a.setAlertType(AlertType.ERROR);
@@ -252,11 +270,25 @@ public class ApiApp extends Application {
      *
      * @param serp is the JSON object
      */
-    private static void updateSerpResponse(SerpResponse serp) {
-        SerpResult result = serp.image_results[0];
-        String img = result.imageUrl;
-        Image nbaImage = new Image(img, 100, 100, false, false);
-        imageView.setImage(nbaImage);
-        imageView.setPreserveRatio(true);
+    private  void updateSerpResponse(SerpResult serp) {
+        String w = serp.knowledge_graph.website;
+        String de = serp.knowledge_graph.description;
+        String fo = serp.knowledge_graph.founded;
+        String ti = serp.knowledge_graph.title;
+
+        if (w == null) {
+            w = "N/A";
+        }
+
+        if (fo == null) {
+            w = "N/A";
+        }
+
+        if (ti == null) {
+            w = "N/A";
+        }
+        bodyText2.setText(add + "\n" + web + w + "\n" + found + fo + "\n" + fn + ti);
+
+        //webView.getEngine().load(website);
     }
 } // ApiApp
